@@ -187,9 +187,9 @@ void main()
     u32 low = finalizeLow(state);
     //return true;
     //if((low & 0xFFFF) == 0xC2D3) // 16 bits
-    if((low & 0xFFFFFF) == 0x5BC2D3) // 24 bits
+    //if((low & 0xFFFFFF) == 0x5BC2D3) // 24 bits
     //if((low & 0xFFFFFFF) == 0x45BC2D3) // 28 bits
-    //if(low == 0xA45BC2D3) // 32 bits (full)
+    if(low == 0xA45BC2D3) // 32 bits (full)
     {
       found = data1007;
       checksums[0] = finalizeLow(state);

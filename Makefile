@@ -1,5 +1,5 @@
 CXXFLAGS += -O3 -march=native -msse4.2 -std=c++2b
-LINKFLAGS += -lvulkan /usr/local/lib/libvuh.so
+LINKFLAGS += -lvulkan /usr/lib/libvuh.so
 
 all: ipl_gpu shader
 

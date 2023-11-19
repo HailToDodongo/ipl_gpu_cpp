@@ -6,6 +6,7 @@
 #include <bit>
 #include <chrono>
 #include <thread>
+#include <filesystem>
 
 #include <vuh/array.hpp>
 #include <vuh/vuh.h>
@@ -30,6 +31,7 @@ namespace
 }
 
 using namespace std::chrono;
+namespace fs = std::filesystem;
 
 void printChecksumBuffer(CheckSumState &state)
 {
@@ -134,14 +136,14 @@ void checksumCalculate(CheckSumState &state, u32 loopEnd = 1008)
 }
 
 // Write out the bootcode to a file, byte-swapped to BE
-void writeOutBuffer(u32 (&bootcode)[BOOTCODE_SIZE_WORDS])
+void writeOutBuffer(const std::vector<u32> &fileWords)
 {
-  u32 bootcodeBE[BOOTCODE_SIZE_WORDS];
-  for(u32 i=0; i<BOOTCODE_SIZE_WORDS; ++i) {
-    bootcodeBE[i] = std::byteswap(bootcode[i]);
+  auto wordsOut = fileWords;
+  for(u32 i=0; i<wordsOut.size(); ++i) {
+    wordsOut[i] = std::byteswap(fileWords[i]);
   }
   auto f = fopen("match.z64", "wb");
-  fwrite(bootcodeBE, 1, BOOTCODE_SIZE, f);
+  fwrite(wordsOut.data(), sizeof(u32), wordsOut.size(), f);
   fclose(f);
 }
 
@@ -150,22 +152,35 @@ void bruteforceFile(const char *filename, u32 seed = 0x9191, u32 startLoop = 0)
 {
   CheckSumState state{};
 
+  fs::path pathInput{filename};
+  u32 inputSize = fs::file_size(pathInput);
+  if(inputSize % 4 != 0) {
+    printf("Input file size is not a multiple of 4!\n");
+    return;
+  }
+
+  if(inputSize < BOOTCODE_SIZE) {
+    printf("Input file is too small, needs to be at least %d bytes!\n", BOOTCODE_SIZE);
+    return;
+  }
+
+  std::vector<u32> inputFile(inputSize / 4);
+
   auto *fp = fopen(filename, "rb");
   if(!fp) {
     printf("Error opening file '%s'!\n", filename);
     return;
   }
 
-  u32 bootcode[BOOTCODE_SIZE_WORDS];
-  if(fread(bootcode, 1, BOOTCODE_SIZE, fp) != BOOTCODE_SIZE) {
+  if(fread(inputFile.data(), sizeof(u32), inputFile.size(), fp) != inputFile.size()) {
     printf("Error reading file, too small!\n");
     fclose(fp);
     return;
   }
   fclose(fp);
 
-  // byte-swap entire bootcode once
-  for(u32 &x : bootcode) {
+  // byte-swap entire code once
+  for(u32 &x : inputFile) {
     x = std::byteswap(x);
   }
 
@@ -209,7 +224,7 @@ void bruteforceFile(const char *filename, u32 seed = 0x9191, u32 startLoop = 0)
 
   // Counteract the initial seed
   // This forces state.input[] 1, 7, 8, 14 and 15 to be, and stay zero.
-  state.input = &bootcode[BOOTCODE_OFFSET / 4];
+  state.input = &inputFile[BOOTCODE_OFFSET / 4];
   state.input[0] = MAGIC_NUMBER * (seed & 0xff) + 1;
 
   auto timeStart = high_resolution_clock::now();
@@ -300,7 +315,7 @@ void bruteforceFile(const char *filename, u32 seed = 0x9191, u32 startLoop = 0)
 
           printf("Found checksum: (%08X, %08X) %016lX !!!!\n", y, matchData1007, buffOut[0]);
           state.input[1007] = matchData1007;
-          writeOutBuffer(bootcode);
+          writeOutBuffer(inputFile);
           return;
         }
       }
