@@ -1,0 +1,15 @@
+cmake-*
+.idea
+rom/
+.vscode
+
+*.bin
+*.z64
+*.d
+*.o
+*.a
+*.so
+*.obj
+*.elf
+*.lib
+ipl_gpu
