@@ -57,30 +57,44 @@ u32 hashMulDiff_ANonZero(u32 factorBase, u32 factorA) {
     #endif
 }
 
-// Taken from: https://github.com/phire/ipl3hasher/tree/optimizations
-// @TODO: optimize out zero-value iterations
+void finalizeLow_Step(inout uvec2 buf, u32 data, u32 i)
+{
+  u32 tmp = (data & 0x02) >> 1;
+  u32 tmp2 = data & 0x01;
+
+  if (tmp == tmp2) {
+    buf[0] += data;
+  }  else {
+    buf[0] = hashMulDiff(buf[0], data, i);
+  }
+
+  if(tmp2 == 1) {
+    buf[1] ^= data;
+  } else {
+    buf[1] = hashMulDiff(buf[1], data, i);
+  }
+}
+
 u32 finalizeLow(in u32[16] state)
 {
     uvec2 buf = uvec2(state[0]);
 
-    for(u32 i=0; i<16; i++)
-    {
-        u32 data = state[i];
-        u32 tmp = (data & 0x02) >> 1;
-        u32 tmp2 = data & 0x01;
-
-        if (tmp == tmp2) {
-            buf[0] += data;
-        }  else {
-            buf[0] = hashMulDiff(buf[0], data, i);
-        }
-
-        if(tmp2 == 1) {
-            buf[1] ^= data;
-        } else {
-            buf[1] = hashMulDiff(buf[1], data, i);
-        }
-    }
+    finalizeLow_Step(buf, state[0], 0);
+    buf[1] = hashMulDiff_ANonZero(buf[1], 1);
+    finalizeLow_Step(buf, state[2], 2);
+    finalizeLow_Step(buf, state[3], 3);
+    finalizeLow_Step(buf, state[4], 4);
+    finalizeLow_Step(buf, state[5], 5);
+    finalizeLow_Step(buf, state[6], 6);
+    buf[1] = hashMulDiff_ANonZero(buf[1], 7);
+    buf[1] = hashMulDiff_ANonZero(buf[1], 8);
+    finalizeLow_Step(buf, state[9], 9);
+    finalizeLow_Step(buf, state[10], 10);
+    finalizeLow_Step(buf, state[11], 11);
+    buf[1] = hashMulDiff_ANonZero(buf[1], 12);
+    finalizeLow_Step(buf, state[13], 13);
+    buf[1] = hashMulDiff_ANonZero(buf[1], 14);
+    buf[1] = hashMulDiff_ANonZero(buf[1], 15);
 
     return buf[0] ^ buf[1];
 }
