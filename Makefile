@@ -1,9 +1,9 @@
 CXXFLAGS += -O3 -march=native -msse4.2 -std=c++2b
 LINKFLAGS += -lvulkan /usr/lib/libvuh.so
 
-all: ipl_gpu shader
+all: ipl_gpu shader/shader.spv
 
-shader: shader/shader.glsl
+shader/shader.spv: shader/shader.glsl
 	glslc -O --target-env=vulkan1.2 \
 			  -fshader-stage=compute \
 			  shader/shader.glsl -o shader/shader.spv
