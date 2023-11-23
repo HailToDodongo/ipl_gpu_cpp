@@ -1,5 +1,12 @@
 # IPL-Checksum GPU Hasher
 
+---
+
+# **DEPRECATED**
+Use: https://github.com/HailToDodongo/ipl_gpu
+
+---
+
 N64 IPL Hash Brute-forcer using Vulkan + Compute Shaders.<br>
 > **Note:**<br>
 > This assumes the `CIC 6105/7105` with the checksum `8618 A45B C2D3`.<br>
